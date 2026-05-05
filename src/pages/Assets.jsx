@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAssets, registerAsset, deleteAsset } from '../api';
+import { getAssets, registerAsset, deleteAsset, getAssetImageUrl } from '../api';
 
 export default function Assets({ addToast }) {
   const [assets, setAssets] = useState([]);
