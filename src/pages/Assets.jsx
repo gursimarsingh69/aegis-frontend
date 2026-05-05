@@ -90,9 +90,11 @@ export default function Assets({ addToast }) {
       <div className="asset-grid">
         {assets.map((asset) => (
           <div key={asset.id} className="asset-thumb">
-            <div className="asset-placeholder">
-              <span>{asset.type === 'video' ? '🎬' : '🖼️'}</span>
-            </div>
+            <img
+              src={getAssetImageUrl(asset.id)}
+              alt={asset.name || asset.id}
+              loading="lazy"
+            />
             <button className="delete-btn" onClick={() => handleDelete(asset.id)}>✕</button>
             <div className="asset-info">
               <div className="asset-name">{asset.name}</div>
