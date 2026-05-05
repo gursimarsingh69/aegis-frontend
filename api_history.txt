@@ -1,0 +1,152 @@
+commit 67653d70cf6059efe05f6ce0fa99485c484c0f71
+Author: JustDeep-RGB <jasdeepsinghzzz50@gmail.com>
+Date:   Wed May 6 00:35:31 2026 +0530
+
+    minor fixes
+
+diff --git a/src/api.js b/src/api.js
+index 64dd20d..088e210 100644
+--- a/src/api.js
++++ b/src/api.js
+@@ -1,7 +1,7 @@
+ import axios from 'axios';
+ 
+ const API_BASE = window.location.hostname === 'localhost'
+-  ? 'http://localhost:8000'
++  ? 'http://localhost:3000'
+   : 'https://aegis-backend-production-ff73.up.railway.app';
+ 
+ const API = axios.create({
+@@ -9,26 +9,26 @@ const API = axios.create({
+   timeout: 120000, // 2 minutes for AI scans
+ });
+ 
+-export const getStatus = () => API.get('/status');
+-export const getHistory = () => API.get('/history');
+-export const getAssets = () => API.get('/assets');
+-export const deleteAsset = (id) => API.delete(`/assets/${id}`);
+-export const getAssetImageUrl = (id) => `${API_BASE}/assets/${id}/image`;
+-export const getSuspiciousImageUrl = (filename) => `${API_BASE}/suspicious/${filename}`;
++export const getStatus = () => API.get('/health');
++export const getHistory = () => API.get('/api/detections');
++export const getAssets = () => API.get('/api/assets');
++export const deleteAsset = (id) => API.delete(`/api/assets/${id}`);
++export const getAssetImageUrl = (id) => `${API_BASE}/api/assets/${id}/image`;
++export const getSuspiciousImageUrl = (filename) => `${API_BASE}/api/sources/${filename}`;
+ 
+ 
+ export const registerAsset = (file) => {
+   const form = new FormData();
+   form.append('file', file);
+-  return API.post('/register', form);
++  return API.post('/api/assets', form);
+ };
+ 
+ export const scanImage = (file) => {
+   const form = new FormData();
+   form.append('file', file);
+-  return API.post('/scan', form);
++  return API.post('/api/assets/scan/file', form);
+ };
+ 
+-export const markFalsePositive = (scanId) => API.patch(`/history/${scanId}`);
++export const markFalsePositive = (scanId) => API.patch(`/api/detections/${scanId}`);
+ 
+ export default API;
+
+commit 80131585d606bda6edaca48b28516bb72a7ebd45
+Author: JustDeep-RGB <jasdeepsinghzzz50@gmail.com>
+Date:   Tue May 5 23:58:21 2026 +0530
+
+    api fixes v3
+
+diff --git a/src/api.js b/src/api.js
+index e7c07d3..64dd20d 100644
+--- a/src/api.js
++++ b/src/api.js
+@@ -1,6 +1,8 @@
+ import axios from 'axios';
+ 
+-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
++const API_BASE = window.location.hostname === 'localhost'
++  ? 'http://localhost:8000'
++  : 'https://aegis-backend-production-ff73.up.railway.app';
+ 
+ const API = axios.create({
+   baseURL: API_BASE,
+
+commit 79f040913a3fa0443348d122901568d7f807557b
+Author: JustDeep-RGB <jasdeepsinghzzz50@gmail.com>
+Date:   Tue May 5 23:47:44 2026 +0530
+
+    api fix
+
+diff --git a/src/api.js b/src/api.js
+index 9356e49..e7c07d3 100644
+--- a/src/api.js
++++ b/src/api.js
+@@ -1,7 +1,9 @@
+ import axios from 'axios';
+ 
++const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
++
+ const API = axios.create({
+-  baseURL: 'http://localhost:8000',
++  baseURL: API_BASE,
+   timeout: 120000, // 2 minutes for AI scans
+ });
+ 
+@@ -9,8 +11,9 @@ export const getStatus = () => API.get('/status');
+ export const getHistory = () => API.get('/history');
+ export const getAssets = () => API.get('/assets');
+ export const deleteAsset = (id) => API.delete(`/assets/${id}`);
+-export const getAssetImageUrl = (id) => `http://localhost:8000/assets/${id}/image`;
+-export const getSuspiciousImageUrl = (filename) => `http://localhost:8000/suspicious/${filename}`;
++export const getAssetImageUrl = (id) => `${API_BASE}/assets/${id}/image`;
++export const getSuspiciousImageUrl = (filename) => `${API_BASE}/suspicious/${filename}`;
++
+ 
+ export const registerAsset = (file) => {
+   const form = new FormData();
+
+commit 53f26810decc225f79a53bbebe9252ecc24cb050
+Author: JustDeep-RGB <jasdeepsinghzzz50@gmail.com>
+Date:   Tue May 5 18:36:14 2026 +0530
+
+    initial commit
+
+diff --git a/src/api.js b/src/api.js
+new file mode 100644
+index 0000000..9356e49
+--- /dev/null
++++ b/src/api.js
+@@ -0,0 +1,29 @@
++import axios from 'axios';
++
++const API = axios.create({
++  baseURL: 'http://localhost:8000',
++  timeout: 120000, // 2 minutes for AI scans
++});
++
++export const getStatus = () => API.get('/status');
++export const getHistory = () => API.get('/history');
++export const getAssets = () => API.get('/assets');
++export const deleteAsset = (id) => API.delete(`/assets/${id}`);
++export const getAssetImageUrl = (id) => `http://localhost:8000/assets/${id}/image`;
++export const getSuspiciousImageUrl = (filename) => `http://localhost:8000/suspicious/${filename}`;
++
++export const registerAsset = (file) => {
++  const form = new FormData();
++  form.append('file', file);
++  return API.post('/register', form);
++};
++
++export const scanImage = (file) => {
++  const form = new FormData();
++  form.append('file', file);
++  return API.post('/scan', form);
++};
++
++export const markFalsePositive = (scanId) => API.patch(`/history/${scanId}`);
++
++export default API;
