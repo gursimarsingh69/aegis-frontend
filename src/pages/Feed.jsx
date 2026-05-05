@@ -9,7 +9,8 @@ export default function Feed({ addToast }) {
   const load = async () => {
     try {
       const res = await getHistory();
-      setHistory(res.data);
+      const historyData = res.data?.data || res.data || [];
+      setHistory(Array.isArray(historyData) ? historyData : []);
     } catch { /* offline */ }
   };
 

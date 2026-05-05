@@ -17,7 +17,9 @@ export default function Scan({ addToast }) {
   const loadHistory = async () => {
     try {
       const res = await getHistory();
-      setRecentScans(res.data.filter(h => h.source === 'manual').slice(0, 5));
+      const historyData = res.data?.data || res.data || [];
+      const arr = Array.isArray(historyData) ? historyData : [];
+      setRecentScans(arr.filter(h => h.source === 'manual').slice(0, 5));
     } catch { /* offline */ }
   };
 
@@ -40,8 +42,9 @@ export default function Scan({ addToast }) {
     setScanning(true);
     try {
       const res = await scanImage(file);
-      setResult(res.data);
-      addToast(res.data.match ? '🚨 Infringement detected!' : '✅ Image is clean', res.data.match ? 'error' : 'success');
+      const scanResult = res.data?.data || res.data;
+      setResult(scanResult);
+      addToast(scanResult.match ? '🚨 Infringement detected!' : '✅ Image is clean', scanResult.match ? 'error' : 'success');
       loadHistory();
     } catch {
       addToast('❌ Scan failed — is the engine running?', 'error');

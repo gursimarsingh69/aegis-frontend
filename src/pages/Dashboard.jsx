@@ -10,7 +10,8 @@ export default function Dashboard() {
       try {
         const [s, h] = await Promise.all([getStatus(), getHistory()]);
         setStatus(s.data);
-        setHistory(h.data);
+        const historyData = h.data?.data || h.data || [];
+        setHistory(Array.isArray(historyData) ? historyData : []);
       } catch { /* engine offline */ }
     };
     load();
