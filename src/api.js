@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const API = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: API_BASE,
   timeout: 120000, // 2 minutes for AI scans
 });
 
@@ -9,8 +11,9 @@ export const getStatus = () => API.get('/status');
 export const getHistory = () => API.get('/history');
 export const getAssets = () => API.get('/assets');
 export const deleteAsset = (id) => API.delete(`/assets/${id}`);
-export const getAssetImageUrl = (id) => `http://localhost:8000/assets/${id}/image`;
-export const getSuspiciousImageUrl = (filename) => `http://localhost:8000/suspicious/${filename}`;
+export const getAssetImageUrl = (id) => `${API_BASE}/assets/${id}/image`;
+export const getSuspiciousImageUrl = (filename) => `${API_BASE}/suspicious/${filename}`;
+
 
 export const registerAsset = (file) => {
   const form = new FormData();
