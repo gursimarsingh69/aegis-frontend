@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAssets, registerAsset, deleteAsset, getAssetImageUrl } from '../api';
+import { getAssets, registerAsset, deleteAsset } from '../api';
 
 export default function Assets({ addToast }) {
   const [assets, setAssets] = useState([]);
@@ -10,7 +10,8 @@ export default function Assets({ addToast }) {
   const load = async () => {
     try {
       const res = await getAssets();
-      setAssets(res.data);
+      // Backend returns { success, data: [...] }, axios wraps in res.data
+      setAssets(res.data.data || []);
     } catch { /* offline */ }
   };
 
@@ -44,6 +45,14 @@ export default function Assets({ addToast }) {
     } catch {
       addToast('❌ Delete failed', 'error');
     }
+  };
+
+  // Extract dimensions from hash_signature (which is a JSON object)
+  const getDimensions = (asset) => {
+    const hs = asset.hash_signature;
+    if (!hs) return '';
+    const sig = typeof hs === 'string' ? JSON.parse(hs) : hs;
+    return sig.width && sig.height ? `${sig.width}×${sig.height}` : '';
   };
 
   return (
@@ -80,15 +89,14 @@ export default function Assets({ addToast }) {
 
       <div className="asset-grid">
         {assets.map((asset) => (
-          <div key={asset.asset_id} className="asset-thumb">
-            <img
-              src={getAssetImageUrl(asset.asset_id)}
-              alt={asset.filename || asset.asset_id}
-              loading="lazy"
-            />
-            <button className="delete-btn" onClick={() => handleDelete(asset.asset_id)}>✕</button>
+          <div key={asset.id} className="asset-thumb">
+            <div className="asset-placeholder">
+              <span>{asset.type === 'video' ? '🎬' : '🖼️'}</span>
+            </div>
+            <button className="delete-btn" onClick={() => handleDelete(asset.id)}>✕</button>
             <div className="asset-info">
-              {asset.width}×{asset.height}
+              <div className="asset-name">{asset.name}</div>
+              <div className="asset-dims">{getDimensions(asset)}</div>
             </div>
           </div>
         ))}
@@ -96,3 +104,4 @@ export default function Assets({ addToast }) {
     </div>
   );
 }
+
