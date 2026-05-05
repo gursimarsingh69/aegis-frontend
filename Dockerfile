@@ -6,6 +6,9 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+ENV VITE_API_URL=https://aegis-backend-production-ff73.up.railway.app
+
 RUN npm run build
 
 FROM node:20-alpine AS production
