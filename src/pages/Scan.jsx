@@ -59,7 +59,7 @@ export default function Scan({ addToast }) {
       {scanning && (
         <div className="loading-overlay">
           <div className="spinner" />
-          <span>Analyzing with Gemini AI…</span>
+          <span>Analyzing…</span>
         </div>
       )}
 
