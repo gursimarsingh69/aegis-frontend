@@ -1,10 +1,11 @@
-import { useState } from 'react';
 import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
 import Dashboard from './pages/Dashboard';
 import Assets from './pages/Assets';
 import Scan from './pages/Scan';
 import Feed from './pages/Feed';
 import ToastContainer from './components/ToastContainer';
+import { useState } from 'react';
 import './index.css';
 
 export default function App() {
@@ -17,21 +18,31 @@ export default function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
+  const titles = {
+    dashboard: 'Aegis Command Center',
+    assets: 'Asset Library',
+    scan: 'Manual Scan',
+    feed: 'Infringement Feed',
+  };
+
   const renderPage = () => {
     switch (page) {
-      case 'dashboard': return <Dashboard addToast={addToast} />;
+      case 'dashboard': return <Dashboard addToast={addToast} onNavigate={setPage} />;
       case 'assets':    return <Assets addToast={addToast} />;
       case 'scan':      return <Scan addToast={addToast} />;
       case 'feed':      return <Feed addToast={addToast} />;
-      default:          return <Dashboard addToast={addToast} />;
+      default:          return <Dashboard addToast={addToast} onNavigate={setPage} />;
     }
   };
 
   return (
     <>
       <Sidebar activePage={page} onNavigate={setPage} />
+      <Topbar title={titles[page]} onNavigate={setPage} />
       <main className="main-content">
-        {renderPage()}
+        <div className="page-inner">
+          {renderPage()}
+        </div>
       </main>
       <ToastContainer toasts={toasts} />
     </>

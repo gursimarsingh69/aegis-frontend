@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getStats, getHistory } from '../api';
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate }) {
   const [status, setStatus] = useState(null);
   const [history, setHistory] = useState([]);
 
@@ -10,99 +10,150 @@ export default function Dashboard() {
       try {
         const [s, h] = await Promise.all([getStats(), getHistory()]);
         setStatus(s.data?.data || s.data);
-        const historyData = h.data?.data || h.data || [];
-        // Map backend detection fields to frontend expectations
-        const mappedHistory = (Array.isArray(historyData) ? historyData : []).map(item => ({
-          ...item,
-          match: true, // all detections in DB are matches
-          reason: `Matched with ${item.assets?.name || 'Asset'}`,
-          scanned_at: item.detected_at,
-        }));
-        setHistory(mappedHistory);
-      } catch (err) { console.error('Failed to load dashboard:', err); }
+        const raw = h.data?.data || h.data || [];
+        setHistory(Array.isArray(raw) ? raw : []);
+      } catch {}
     };
     load();
-    const interval = setInterval(load, 8000);
-    return () => clearInterval(interval);
+    const t = setInterval(load, 8000);
+    return () => clearInterval(t);
   }, []);
 
-  const totalScans = status?.total_scans || 0;
+  const totalAssets  = status?.total_assets  || 0;
+  const totalScans   = status?.total_scans   || 0;
   const totalMatches = status?.total_matches || 0;
-  const totalAssets = status?.total_assets || 0;
-  const threatLevel = totalScans > 0 ? Math.round((totalMatches / totalScans) * 100) : 0;
 
-  const gaugeOffset = 251 - (251 * Math.min(threatLevel, 100)) / 100;
+  // Threat score: 0–10 scale (10 = safest when no scans done, drops with match ratio)
+  const matchRatio   = totalScans > 0 ? totalMatches / totalScans : 0;
+  const threatScore  = Math.max(0, Math.round(10 - matchRatio * 10));
+  const threatLabel  = threatScore >= 8 ? 'SAFE' : threatScore >= 5 ? 'MODERATE' : threatScore >= 3 ? 'HIGH' : 'CRITICAL';
+  const threatColor  = threatScore >= 8 ? '#22c55e' : threatScore >= 5 ? '#f59e0b' : '#ef4444';
 
-  const threatLabel = threatLevel < 20 ? 'SAFE' : threatLevel < 50 ? 'MODERATE' : threatLevel < 80 ? 'HIGH' : 'CRITICAL';
-  const threatColor = threatLevel < 20 ? '#22c55e' : threatLevel < 50 ? '#f59e0b' : '#ef4444';
+  // SVG arc for semicircle gauge (180° arc, r=70)
+  const R = 70;
+  const cx = 100, cy = 90;
+  const startAngle = -180, sweepAngle = 180;
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const arcX = (a) => cx + R * Math.cos(toRad(a));
+  const arcY = (a) => cy + R * Math.sin(toRad(a));
+  const trackD = `M ${arcX(startAngle)} ${arcY(startAngle)} A ${R} ${R} 0 0 1 ${arcX(startAngle + sweepAngle)} ${arcY(startAngle + sweepAngle)}`;
+  const fillAngle = startAngle + (sweepAngle * threatScore) / 10;
+  const fillD = `M ${arcX(startAngle)} ${arcY(startAngle)} A ${R} ${R} 0 ${threatScore > 5 ? 1 : 0} 1 ${arcX(fillAngle)} ${arcY(fillAngle)}`;
 
-  const formatTime = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  // recent 3 for activity stream
+  const recent = history.slice(0, 3);
 
   return (
-    <div>
-      <h1 className="page-title">Command Center</h1>
+    <>
+      {/* 2-col grid: left = Threat (tall), right = 2 rows */}
+      <div className="dash-grid">
+        {/* Threat Level */}
+        <div className="card threat-card dash-threat">
+          <div className="card-title">Threat Level</div>
+          <div className="gauge-wrap">
+            <svg viewBox="0 0 200 110" className="gauge-svg">
+              <defs>
+                <linearGradient id="tGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#22c55e" />
+                  <stop offset="50%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#ef4444" />
+                </linearGradient>
+              </defs>
+              {/* Track */}
+              <path d={trackD} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="12" strokeLinecap="round" />
+              {/* Fill */}
+              {threatScore > 0 && (
+                <path d={fillD} fill="none" stroke={threatColor} strokeWidth="12" strokeLinecap="round"
+                  style={{ filter: `drop-shadow(0 0 6px ${threatColor}88)`, transition: 'all 1s ease' }} />
+              )}
+              <text x="100" y="88" textAnchor="middle" fill={threatColor} fontSize="26" fontWeight="800" fontFamily="Inter">{threatScore} -</text>
+            </svg>
+            <div>
+              <div className="gauge-label" style={{ color: threatColor }}>{threatScore}/10</div>
+              <div className="gauge-sub" style={{ color: threatColor }}>{threatLabel}</div>
+            </div>
+          </div>
+          <button className="btn-deep-scan" onClick={() => onNavigate('scan')}>🔬 Run Deep Scan</button>
+        </div>
 
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-icon">🛡️</div>
-          <div className="stat-value">{totalAssets}</div>
-          <div className="stat-label">Assets Protected</div>
+        {/* Assets Overview */}
+        <div className="card">
+          <div className="card-title">Assets Overview</div>
+          <div className="assets-overview-row">
+            <div className="assets-stats">
+              <div className="assets-count-big">{totalAssets}</div>
+              <div className="assets-dot-row">
+                <div className="green-dot" />
+                <span>Assets Protected</span>
+              </div>
+              <button className="btn-manage" onClick={() => onNavigate('assets')}>Manage Assets</button>
+            </div>
+            <div className="assets-bars">
+              {['🛡️', '🗂️', '🔍'].map((icon, i) => (
+                <div className="asset-bar-row" key={i}>
+                  <span className="asset-bar-icon">{icon}</span>
+                  <div className="asset-bar-track">
+                    <div className="asset-bar-fill" style={{ width: `${[75, 50, 30][i]}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">🔬</div>
-          <div className="stat-value">{totalScans}</div>
-          <div className="stat-label">Scans Performed</div>
+
+        {/* Infringements */}
+        <div className="card">
+          <div className="card-title">Infringements</div>
+          <div className="infring-count">{totalMatches}</div>
+          <div className="infring-label">Recent Infringements</div>
+          <button className="btn-view-all" onClick={() => onNavigate('feed')}>View All Matches</button>
         </div>
-        <div className="stat-card accent">
-          <div className="stat-icon">🚨</div>
-          <div className="stat-value">{totalMatches}</div>
-          <div className="stat-label">Infringements</div>
+
+        {/* Profile / Setup */}
+        <div className="card">
+          <div className="card-title">Profile / Setup</div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 12 }}>Asset Details</div>
+          <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, marginBottom: 8 }}>
+            <div style={{ width: '60%', height: '100%', background: 'var(--accent)', borderRadius: 3 }} />
+          </div>
+          <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, marginBottom: 16 }}>
+            <div style={{ width: '40%', height: '100%', background: '#8b5cf6', borderRadius: 3 }} />
+          </div>
+          <button className="btn-manage" onClick={() => onNavigate('assets')}>Review</button>
         </div>
       </div>
 
-      <div className="gauge-row">
-        <div className="skeu-card">
-          <h2 className="section-title">Threat Level</h2>
-          <svg viewBox="0 0 200 120" className="gauge-svg">
-            <defs>
-              <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#22c55e" />
-                <stop offset="50%" stopColor="#f59e0b" />
-                <stop offset="100%" stopColor="#ef4444" />
-              </linearGradient>
-            </defs>
-            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1a1a2e" strokeWidth="14" strokeLinecap="round" />
-            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" strokeWidth="14" strokeLinecap="round"
-              strokeDasharray="251" strokeDashoffset={gaugeOffset}
-              style={{ transition: 'stroke-dashoffset 1s ease' }} />
-            <text x="100" y="90" textAnchor="middle" className="gauge-text">{threatLevel}</text>
-            <text x="100" y="112" textAnchor="middle" className="gauge-sublabel" fill={threatColor}>{threatLabel}</text>
-          </svg>
-        </div>
-
-        <div className="skeu-card">
-          <h2 className="section-title">Recent Activity</h2>
-          <div className="activity-feed">
-            {history.length === 0 ? (
-              <div className="activity-empty">No scan activity yet. Run a scan to see results here.</div>
-            ) : (
-              history.slice(0, 12).map((item, i) => (
-                <div key={i} className="activity-item">
-                  <div className={`activity-dot ${item.match ? 'match' : 'clean'}`} />
-                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {item.match ? '🚨 Match' : '✅ Clean'} — {item.reason?.slice(0, 60) || 'Scanned'}
-                  </span>
-                  <span className="activity-time">{formatTime(item.scanned_at)}</span>
+      {/* Activity Stream */}
+      <div className="activity-stream">
+        <div className="activity-bg" />
+        <div className="activity-inner">
+          <div className="activity-stream-title">Activity Stream</div>
+          <div className="activity-cards">
+            {recent.length === 0 ? (
+              <>
+                <div className="activity-chip">
+                  <span className="activity-chip-icon">🔍</span>
+                  <div className="activity-chip-body">
+                    <div className="activity-chip-title">No activity yet</div>
+                    <div className="activity-chip-sub">Run a scan to see results here</div>
+                  </div>
                 </div>
-              ))
-            )}
+              </>
+            ) : recent.map((item, i) => (
+              <div className="activity-chip" key={i}>
+                <span className="activity-chip-icon">{item.is_authorized === false ? '🚨' : '✅'}</span>
+                <div className="activity-chip-body">
+                  <div className="activity-chip-title">{item.is_authorized === false ? 'Match found' : 'Scan complete'}</div>
+                  <div className="activity-chip-sub">{item.assets?.name || 'Asset'} · {new Date(item.detected_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="activity-stream-footer">
+            <button className="btn-explore" onClick={() => onNavigate('feed')}>Explore Feed</button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
