@@ -63,9 +63,9 @@ export default function Feed({ addToast }) {
   };
 
   return (
-    <div>
-      <h1 className="page-title">Infringement Feed</h1>
-
+    <>
+      <div className="page-header"><h1>Infringement Feed</h1></div>
+      <div className="page-body">
       <div className="feed-toolbar">
         <div className="feed-filters">
           <select className="skeu-select" value={platform} onChange={(e) => setPlatform(e.target.value)}>
@@ -131,6 +131,7 @@ export default function Feed({ addToast }) {
           </div>
         ))
       )}
-    </div>
+      </div>
+    </>
   );
 }

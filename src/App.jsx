@@ -4,13 +4,19 @@ import Dashboard from './pages/Dashboard';
 import Assets from './pages/Assets';
 import Scan from './pages/Scan';
 import Feed from './pages/Feed';
+import Profile from './pages/Profile';
 import ToastContainer from './components/ToastContainer';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './index.css';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [toasts, setToasts] = useState([]);
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const addToast = (message, type = 'info') => {
     const id = Date.now();
@@ -23,6 +29,7 @@ export default function App() {
     assets: 'Asset Library',
     scan: 'Manual Scan',
     feed: 'Infringement Feed',
+    profile: 'Profile',
   };
 
   const renderPage = () => {
@@ -31,6 +38,7 @@ export default function App() {
       case 'assets':    return <Assets addToast={addToast} />;
       case 'scan':      return <Scan addToast={addToast} />;
       case 'feed':      return <Feed addToast={addToast} />;
+      case 'profile':   return <Profile />;
       default:          return <Dashboard addToast={addToast} onNavigate={setPage} />;
     }
   };
@@ -38,7 +46,7 @@ export default function App() {
   return (
     <>
       <Sidebar activePage={page} onNavigate={setPage} />
-      <Topbar title={titles[page]} onNavigate={setPage} />
+      <Topbar title={titles[page]} onNavigate={setPage} theme={theme} setTheme={setTheme} />
       <main className="main-content">
         <div className="page-inner">
           {renderPage()}

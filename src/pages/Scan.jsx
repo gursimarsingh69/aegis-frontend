@@ -53,9 +53,9 @@ export default function Scan({ addToast }) {
   };
 
   return (
-    <div>
-      <h1 className="page-title">Manual Scan</h1>
-
+    <>
+      <div className="page-header"><h1>Manual Scan</h1></div>
+      <div className="page-body">
       {scanning && (
         <div className="loading-overlay">
           <div className="spinner" />
@@ -64,8 +64,7 @@ export default function Scan({ addToast }) {
       )}
 
       <div className="scan-layout">
-        {/* Left: Upload */}
-        <div className="skeu-card">
+        <div className="scan-panel">
           {!preview ? (
             <div
               className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
@@ -101,8 +100,7 @@ export default function Scan({ addToast }) {
           )}
         </div>
 
-        {/* Right: Result */}
-        <div className="skeu-card">
+        <div className="scan-panel">
           <h2 className="section-title">AI Verdict</h2>
 
           {!result ? (
@@ -151,8 +149,7 @@ export default function Scan({ addToast }) {
         </div>
       </div>
 
-      {/* Recent manual scans */}
-      <div className="skeu-card">
+      <div className="page-body" style={{ paddingTop:0 }}>
         <h2 className="section-title">Recent Manual Scans</h2>
         {recentScans.length === 0 ? (
           <div className="activity-empty">No manual scans yet.</div>
@@ -167,7 +164,8 @@ export default function Scan({ addToast }) {
             </div>
           ))
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -56,9 +56,9 @@ export default function Assets({ addToast }) {
   };
 
   return (
-    <div>
-      <h1 className="page-title">Asset Library</h1>
-
+    <>
+      <div className="page-header"><h1>Asset Library</h1></div>
+      <div className="page-body">
       <div className="asset-toolbar">
         <div
           className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
@@ -103,7 +103,8 @@ export default function Assets({ addToast }) {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

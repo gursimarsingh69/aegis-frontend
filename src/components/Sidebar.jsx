@@ -18,18 +18,18 @@ export default function Sidebar({ activePage, onNavigate }) {
   const go = (id) => { onNavigate(id); setMobileOpen(false); };
 
   const links = [
-    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-    { id: 'assets',    icon: '🗂️', label: 'Asset Library' },
-    { id: 'scan',      icon: '🔍', label: 'Manual Scan' },
-    { id: 'feed',      icon: '🚨', label: 'Infringement Feed' },
+    { id: 'dashboard', icon: '⊞', title: 'Dashboard' },
+    { id: 'assets',    icon: '🗂', title: 'Asset Library' },
+    { id: 'scan',      icon: '🔍', title: 'Manual Scan' },
+    { id: 'feed',      icon: '🚨', title: 'Infringement Feed' },
   ];
 
   return (
     <>
-      {/* Mobile top bar */}
+      {/* Mobile header */}
       <header className="mobile-header">
-        <div className="brand-icon" style={{ width:32, height:32, fontSize:15 }}>🛡️</div>
-        <span className="brand-text">AEGIS</span>
+        <span style={{ fontSize:18 }}>🛡️</span>
+        <span className="mobile-header-title">AEGIS</span>
         <button className="hamburger" onClick={() => setMobileOpen(o => !o)} aria-label="Menu">
           <span className={`ham-bar ${mobileOpen ? 'open' : ''}`} />
           <span className={`ham-bar ${mobileOpen ? 'open' : ''}`} />
@@ -41,16 +41,20 @@ export default function Sidebar({ activePage, onNavigate }) {
 
       <nav className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-icon">🛡️</div>
-          <span className="brand-text">AEGIS</span>
+          <span style={{ fontSize:18 }}>🛡️</span>
+          <span style={{ color:'#fff', fontWeight:700, letterSpacing:2 }}>AEGIS</span>
         </div>
 
         <ul className="nav-links">
           {links.map(l => (
             <li key={l.id}>
-              <a className={`nav-link ${activePage === l.id ? 'active' : ''}`} onClick={() => go(l.id)}>
-                <span className="nav-icon">{l.icon}</span>
-                <span className="nav-label">{l.label}</span>
+              <a
+                className={`nav-link ${activePage === l.id ? 'active' : ''}`}
+                onClick={() => go(l.id)}
+                title={l.title}
+              >
+                <span className="nav-icon" style={{ fontSize:18 }}>{l.icon}</span>
+                <span className="nav-label" style={{ marginLeft:12, fontSize:14, color:'#f4f4f4' }}>{l.title}</span>
               </a>
             </li>
           ))}
@@ -58,7 +62,6 @@ export default function Sidebar({ activePage, onNavigate }) {
 
         <div className="sidebar-status">
           <div className={`status-dot ${online === true ? 'online' : online === false ? 'offline' : ''}`} />
-          <span>{online === true ? 'Engine Online' : online === false ? 'Engine Offline' : 'Checking…'}</span>
         </div>
       </nav>
     </>
