@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getStatus, getHistory } from '../api';
+import { getStats, getHistory } from '../api';
 
 export default function Dashboard() {
   const [status, setStatus] = useState(null);
@@ -8,11 +8,18 @@ export default function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [s, h] = await Promise.all([getStatus(), getHistory()]);
-        setStatus(s.data);
+        const [s, h] = await Promise.all([getStats(), getHistory()]);
+        setStatus(s.data?.data || s.data);
         const historyData = h.data?.data || h.data || [];
-        setHistory(Array.isArray(historyData) ? historyData : []);
-      } catch { /* engine offline */ }
+        // Map backend detection fields to frontend expectations
+        const mappedHistory = (Array.isArray(historyData) ? historyData : []).map(item => ({
+          ...item,
+          match: true, // all detections in DB are matches
+          reason: `Matched with ${item.assets?.name || 'Asset'}`,
+          scanned_at: item.detected_at,
+        }));
+        setHistory(mappedHistory);
+      } catch (err) { console.error('Failed to load dashboard:', err); }
     };
     load();
     const interval = setInterval(load, 8000);

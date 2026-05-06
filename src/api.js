@@ -10,6 +10,7 @@ const API = axios.create({
 });
 
 export const getStatus = () => API.get('/health');
+export const getStats = () => API.get('/api/stats');
 export const getHistory = () => API.get('/api/detections');
 export const getAssets = () => API.get('/api/assets');
 export const deleteAsset = (id) => API.delete(`/api/assets/${id}`);
